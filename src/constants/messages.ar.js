@@ -1,0 +1,107 @@
+export const MSG = {
+  SUCCESS: "تمت العملية بنجاح",
+  ERROR: "حدث خطأ",
+  PAGE_NOT_FOUND: "الصفحة غير موجودة",
+
+  // Auth / middleware
+  NOT_AUTHORIZED: "غير مصرح",
+  USER_NOT_FOUND: "المستخدم غير موجود",
+  ACCOUNT_FROZEN: "الحساب مجمّد",
+  ONLY_ADMIN: "مسموح للمسؤول فقط",
+  ACCESS_DENIED: "تم رفض الوصول",
+  INCORRECT_PASSWORD: "كلمة المرور غير صحيحة",
+  PASSWORD_RESET_NEEDED: "يجب إعادة تعيين كلمة المرور. يرجى التواصل مع الدعم",
+  USER_EXISTS: "المستخدم موجود بالفعل",
+  LOGIN_SUCCESS: "تم تسجيل الدخول بنجاح",
+  USER_CREATED: "تم إنشاء المستخدم بنجاح",
+  USER_AUTHENTICATED: "المستخدم مصادق عليه",
+  USERS_RETRIEVED: "تم جلب المستخدمين بنجاح",
+
+  // Categories
+  CATEGORY_CREATED: "تم إنشاء التصنيف بنجاح",
+  CATEGORIES_RETRIEVED: "تم جلب التصنيفات بنجاح",
+  CATEGORY_RETRIEVED: "تم جلب التصنيف بنجاح",
+  CATEGORY_UPDATED: "تم تحديث التصنيف بنجاح",
+  CATEGORY_DELETED: "تم حذف التصنيف بنجاح",
+  CATEGORY_RESTORED: "تم استعادة التصنيف بنجاح",
+  CATEGORY_EXISTS: "اسم التصنيف موجود بالفعل",
+  CATEGORY_NOT_FOUND: "التصنيف غير موجود",
+  CATEGORY_ALREADY_ACTIVE: "التصنيف مفعّل بالفعل",
+  CATEGORY_INACTIVE: "التصنيف غير موجود أو غير مفعّل",
+
+  // Suppliers
+  SUPPLIER_CREATED: "تم إنشاء المورد بنجاح",
+  SUPPLIERS_RETRIEVED: "تم جلب الموردين بنجاح",
+  SUPPLIER_RETRIEVED: "تم جلب المورد بنجاح",
+  SUPPLIER_UPDATED: "تم تحديث المورد بنجاح",
+  SUPPLIER_DELETED: "تم حذف المورد بنجاح",
+  SUPPLIER_RESTORED: "تم استعادة المورد بنجاح",
+  SUPPLIER_NOT_FOUND: "المورد غير موجود",
+  SUPPLIER_ALREADY_ACTIVE: "المورد مفعّل بالفعل",
+  SUPPLIER_INACTIVE: "المورد غير موجود أو غير مفعّل",
+
+  // Products
+  PRODUCT_CREATED: "تم إنشاء المنتج بنجاح",
+  PRODUCTS_RETRIEVED: "تم جلب المنتجات بنجاح",
+  PRODUCT_RETRIEVED: "تم جلب المنتج بنجاح",
+  PRODUCT_UPDATED: "تم تحديث المنتج بنجاح",
+  PRODUCT_DEACTIVATED: "تم تعطيل المنتج بنجاح",
+  PRODUCT_RESTORED: "تم استعادة المنتج بنجاح",
+  PRODUCT_ALREADY_ACTIVE: "المنتج مفعّل بالفعل",
+  PRODUCT_NOT_FOUND: "المنتج غير موجود",
+  PRODUCT_IMAGE_REQUIRED: "صورة المنتج مطلوبة",
+  SKU_EXISTS: "رمز SKU موجود بالفعل",
+  BARCODE_EXISTS: "الباركود موجود بالفعل",
+
+  // Stock
+  STOCK_RETRIEVED: "تم جلب المخزون بنجاح",
+  STOCK_ADJUSTED: "تم تعديل المخزون بنجاح",
+  LOW_STOCK_RETRIEVED: "تم جلب المنتجات منخفضة المخزون بنجاح",
+  STOCK_NOT_FOUND: "المخزون غير موجود",
+  STOCK_RECORD_NOT_FOUND: "سجل المخزون غير موجود",
+  QUANTITY_NON_NEGATIVE: "يجب أن تكون الكمية رقمًا غير سالب",
+  QUANTITY_UNCHANGED: "الكمية لم تتغير",
+  STOCK_MOVEMENTS_RETRIEVED: "تم جلب حركات المخزون بنجاح",
+  INSUFFICIENT_STOCK: (name, available) =>
+    `المخزون غير كافٍ للمنتج ${name}. المتاح: ${available}`,
+  STOCK_NOT_FOUND_FOR_PRODUCT: (sku) => `المخزون غير موجود للمنتج ${sku}`,
+
+  // Invoices
+  INVOICE_CREATED: "تم إنشاء الفاتورة بنجاح",
+  INVOICES_RETRIEVED: "تم جلب الفواتير بنجاح",
+  INVOICE_RETRIEVED: "تم جلب الفاتورة بنجاح",
+  INVOICE_RETURNED: "تم إرجاع الفاتورة بنجاح",
+  INVOICE_NOT_FOUND: "الفاتورة غير موجودة",
+  INVOICE_ALREADY_RETURNED: "تم إرجاع الفاتورة بالفعل",
+  INVOICE_NEEDS_ITEMS: "يجب أن تحتوي الفاتورة على عنصر واحد على الأقل",
+  DISCOUNT_EXCEEDS: "لا يمكن أن يتجاوز الخصم المجموع الفرعي",
+  INVOICE_NUMBER_FAILED: "فشل إنشاء رقم فاتورة فريد",
+  PRODUCT_NOT_FOUND_ID: (id) => `المنتج غير موجود: ${id}`,
+
+  // Settings / Dashboard / Activity
+  SETTINGS_RETRIEVED: "تم جلب الإعدادات بنجاح",
+  SETTINGS_UPDATED: "تم تحديث الإعدادات بنجاح",
+  DASHBOARD_RETRIEVED: "تم جلب إحصائيات لوحة التحكم بنجاح",
+  ACTIVITY_LOGS_RETRIEVED: "تم جلب سجل الأنشطة بنجاح",
+
+  // Activity descriptions
+  LOG_CREATED_CATEGORY: (name) => `تم إنشاء التصنيف ${name}`,
+  LOG_UPDATED_CATEGORY: (name) => `تم تحديث التصنيف ${name}`,
+  LOG_DELETED_CATEGORY: (name) => `تم حذف التصنيف ${name} وتعطيل المنتجات المرتبطة به`,
+  LOG_RESTORED_CATEGORY: (name) => `تم استعادة التصنيف ${name} والمنتجات المرتبطة به`,
+  LOG_CREATED_SUPPLIER: (name) => `تم إنشاء المورد ${name}`,
+  LOG_UPDATED_SUPPLIER: (name) => `تم تحديث المورد ${name}`,
+  LOG_DELETED_SUPPLIER: (name) => `تم حذف المورد ${name}`,
+  LOG_RESTORED_SUPPLIER: (name) => `تم استعادة المورد ${name}`,
+  LOG_CREATED_PRODUCT: (name, sku) => `تم إنشاء المنتج ${name} (${sku})`,
+  LOG_UPDATED_PRODUCT: (name, sku) => `تم تحديث المنتج ${name} (${sku})`,
+  LOG_DEACTIVATED_PRODUCT: (name, sku) => `تم تعطيل المنتج ${name} (${sku})`,
+  LOG_RESTORED_PRODUCT: (name, sku) => `تم استعادة المنتج ${name} (${sku})`,
+  LOG_ADJUSTED_STOCK: (sku, qty, reason) =>
+    `تم تعديل مخزون المنتج ${sku} إلى ${qty} (${reason})`,
+  LOG_CREATED_INVOICE: (number) => `تم إنشاء الفاتورة ${number}`,
+  LOG_RETURNED_INVOICE: (number, reason) =>
+    `تم إرجاع الفاتورة ${number}: ${reason || ""}`,
+  LOG_CREATED_USER: (email, role) => `تم إنشاء المستخدم ${email} بدور ${role}`,
+  LOG_UPDATED_SETTINGS: "تم تحديث إعدادات المتجر",
+};

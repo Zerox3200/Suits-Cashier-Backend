@@ -1,0 +1,35 @@
+---
+description: Auth, JWT, password hashing, and admin checks
+globs: src/modules/auth/**/*.js, src/middleware/**/*.js
+alwaysApply: false
+---
+
+# Auth & Security
+
+## Passwords
+
+- Hash with **argon2id** (`argon2.hash` / `argon2.verify`)
+- Use memoryCost `2 ** 16`, timeCost `3`, parallelism `1`
+- Never return or log plaintext passwords
+
+## JWT
+
+- Sign with `process.env.JWT_SECRET` and payload `{ id: user._id }`
+- Read token from `req.headers.token`
+- Protect routes with `CheckToken`; admin-only with `CheckAdmin` (`src/middleware/Admin.middleware.js`)
+
+## Responses
+
+```js
+// success
+{ message: "...", success: true, user, token }
+
+// failure
+{ message: "...", success: false }
+```
+
+## Rules
+
+- Do not put role assignment on public signup unless explicitly required
+- Prefer verifying users by `_id` from the JWT when the User model uses `email` (lowercase)
+- Keep validation min password length at **9** characters (existing Joi)

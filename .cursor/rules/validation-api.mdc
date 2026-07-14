@@ -1,0 +1,33 @@
+---
+description: Joi validation middleware and API error responses
+globs: "**/*Validation*.js,**/*validation*.js,src/utils/ErrorCatch.js,src/app.router.js"
+alwaysApply: false
+---
+
+# Validation & Errors
+
+## Joi middleware
+
+```js
+export const XValidation = ErrorCatch(async (req, res, next) => {
+  const schema = joi.object({ /* fields */ });
+  const { error } = schema.validate(req.body, { abortEarly: false });
+  if (error) {
+    const errorMessages = error.details.map((e) => e.message).join(". ");
+    return res.status(400).json({ error: errorMessages });
+  }
+  next();
+});
+```
+
+## Global errors
+
+- Controllers: wrap with `ErrorCatch` from `src/utils/ErrorCatch.js`
+- Router 404 / global handler in `app.router.js` uses `error.cause` as status
+- Prefer `success: false` + `message` for app errors; validation uses `{ error: "..." }`
+
+## Rules
+
+- Add custom `.messages({...})` on Joi fields (match auth validation style)
+- Validate `req.body` with `abortEarly: false` when collecting multiple field errors
+- Call `next()` only after validation passes

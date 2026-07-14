@@ -1,0 +1,661 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-suits-cashier-pos",
+    "name": "Suits Cashier POS API",
+    "description": "Postman collection for Suits Cashier backend.\n\n**Auth:** Send JWT in header `token` (not Authorization Bearer).\n\n**Default admin (seeded):**\n- email: `admin@suits.com`\n- password: `Admin@12345`\n\n**Flow tip:** Login first → token is saved automatically → create Category & Supplier → create Product (form-data with image) → adjust stock / create invoice.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:5200" },
+    { "key": "token", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "supplierId", "value": "" },
+    { "key": "productId", "value": "" },
+    { "key": "invoiceId", "value": "" },
+    { "key": "invoiceNumber", "value": "" },
+    { "key": "userId", "value": "" }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "token", "type": "string" },
+      { "key": "value", "value": "{{token}}", "type": "string" },
+      { "key": "in", "value": "header", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('token', res.data.token);",
+                  "  if (res.data.user && res.data.user._id) {",
+                  "    pm.collectionVariables.set('userId', res.data.user._id);",
+                  "  }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@suits.com\",\n  \"password\": \"Admin@12345\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Public login. Saves `token` to collection variables on success."
+          }
+        },
+        {
+          "name": "Create User (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cashier One\",\n  \"email\": \"cashier@suits.com\",\n  \"password\": \"Cashier@123\",\n  \"confirmpassword\": \"Cashier@123\",\n  \"phone\": \"01012345678\",\n  \"role\": \"كاشير\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/users",
+            "description": "Admin only. Roles: `مسؤول` | `كاشير`."
+          }
+        },
+        {
+          "name": "List Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/auth/users"
+          }
+        },
+        {
+          "name": "Me (Current User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Create Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.category) {",
+                  "  pm.collectionVariables.set('categoryId', res.data.category._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Suits\",\n  \"description\": \"Formal suits\",\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/categories"
+          }
+        },
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categories?page=1&limit=10&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "" },
+                { "key": "isActive", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Suits\",\n  \"description\": \"Updated description\",\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/categories/{{categoryId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Suppliers",
+      "item": [
+        {
+          "name": "Create Supplier",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.supplier) {",
+                  "  pm.collectionVariables.set('supplierId', res.data.supplier._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Main Supplier\",\n  \"phone\": \"01011122233\",\n  \"address\": \"Cairo\",\n  \"notes\": \"Primary vendor\",\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/suppliers"
+          }
+        },
+        {
+          "name": "List Suppliers",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/suppliers?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["suppliers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/suppliers/{{supplierId}}"
+          }
+        },
+        {
+          "name": "Update Supplier",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Main Supplier Updated\",\n  \"phone\": \"01011122233\",\n  \"address\": \"Giza\",\n  \"notes\": \"Updated notes\",\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/suppliers/{{supplierId}}"
+          }
+        },
+        {
+          "name": "Delete Supplier",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/suppliers/{{supplierId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.product) {",
+                  "  pm.collectionVariables.set('productId', res.data.product._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "sku", "value": "SUIT-001", "type": "text" },
+                { "key": "barcode", "value": "6223001000001", "type": "text" },
+                { "key": "name", "value": "Classic Navy Suit", "type": "text" },
+                { "key": "description", "value": "Navy blue two-piece suit", "type": "text" },
+                { "key": "categoryId", "value": "{{categoryId}}", "type": "text" },
+                { "key": "supplierId", "value": "{{supplierId}}", "type": "text" },
+                { "key": "costPrice", "value": "800", "type": "text" },
+                { "key": "sellingPrice", "value": "1500", "type": "text" },
+                { "key": "initialQuantity", "value": "20", "type": "text" },
+                { "key": "minimumQuantity", "value": "5", "type": "text" },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select a single product image file"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/products",
+            "description": "Admin only. Multipart form-data. Field `image` is required (single file)."
+          }
+        },
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&limit=10&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "search", "value": "" },
+                { "key": "categoryId", "value": "{{categoryId}}", "disabled": true },
+                { "key": "supplierId", "value": "{{supplierId}}", "disabled": true },
+                { "key": "isActive", "value": "true", "disabled": true }
+              ]
+            },
+            "description": "Cashier or Admin. Search by name / sku / barcode."
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}",
+            "description": "Returns product (populated category/supplier) + stock."
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Classic Navy Suit Updated", "type": "text" },
+                { "key": "sellingPrice", "value": "1600", "type": "text" },
+                { "key": "costPrice", "value": "850", "type": "text" },
+                { "key": "minimumQuantity", "value": "3", "type": "text" },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "Optional — omit to keep existing image"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Deactivate Product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/products/{{productId}}/deactivate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stock",
+      "item": [
+        {
+          "name": "List Stock",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/stock?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["stock"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "productId", "value": "{{productId}}", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Low Stock (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/stock/low"
+          }
+        },
+        {
+          "name": "Get Stock by Product",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/stock/{{productId}}"
+          }
+        },
+        {
+          "name": "Adjust Stock (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 50,\n  \"reason\": \"شراء\"\n}"
+            },
+            "url": "{{baseUrl}}/stock/{{productId}}",
+            "description": "Sets absolute quantity.\n\nReasons: `شراء` | `تالف` | `مفقود` | `يدوي` | `تصحيح` | `إرجاع`"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stock Movements",
+      "item": [
+        {
+          "name": "List Stock Movements (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/stock-movements?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["stock-movements"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "productId", "value": "{{productId}}", "disabled": true },
+                { "key": "type", "value": "دخول", "disabled": true },
+                { "key": "reason", "value": "فاتورة", "disabled": true }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoices",
+      "item": [
+        {
+          "name": "Create Invoice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.success && res.data && res.data.invoice) {",
+                  "  pm.collectionVariables.set('invoiceId', res.data.invoice._id);",
+                  "  pm.collectionVariables.set('invoiceNumber', res.data.invoice.invoiceNumber);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Walk-in Customer\",\n  \"customerPhone\": \"01099988877\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"discount\": 0,\n  \"tax\": 0,\n  \"paymentMethod\": \"نقدي\",\n  \"notes\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/invoices",
+            "description": "Cashier or Admin. `paymentMethod`: `نقدي` | `فيزا`.\nCreates invoice + deducts stock + stock movement OUT."
+          }
+        },
+        {
+          "name": "List Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/invoices?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["invoices"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "مكتملة", "disabled": true },
+                { "key": "paymentMethod", "value": "نقدي", "disabled": true },
+                { "key": "from", "value": "2026-01-01", "disabled": true },
+                { "key": "to", "value": "2026-12-31", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Invoice by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/invoices/{{invoiceId}}"
+          }
+        },
+        {
+          "name": "Get Invoice by Number",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/invoices/number/{{invoiceNumber}}",
+            "description": "Lookup by `INV-YYYYMMDD-XXXX`."
+          }
+        },
+        {
+          "name": "Return Invoice (Admin — Full)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returnReason\": \"Customer changed mind\"\n}"
+            },
+            "url": "{{baseUrl}}/invoices/{{invoiceId}}/return",
+            "description": "Admin only. Full return — restores stock for all items."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "Get Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/settings"
+          }
+        },
+        {
+          "name": "Update Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "storeName", "value": "Suits Cashier Store", "type": "text" },
+                { "key": "phone", "value": "01000000000", "type": "text" },
+                { "key": "address", "value": "Cairo, Egypt", "type": "text" },
+                { "key": "currency", "value": "EGP", "type": "text" },
+                { "key": "defaultTax", "value": "0", "type": "text" },
+                { "key": "receiptFooter", "value": "Thank you for shopping with us", "type": "text" },
+                {
+                  "key": "logo",
+                  "type": "file",
+                  "src": [],
+                  "description": "Optional store logo"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/settings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": "{{baseUrl}}/dashboard",
+            "description": "Today/monthly sales, revenue, profit, product counts, OOS & low stock lists, recent invoices."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activity Logs",
+      "item": [
+        {
+          "name": "List Activity Logs (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "token", "value": "{{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/activity-logs?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["activity-logs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

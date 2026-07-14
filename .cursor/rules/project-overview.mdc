@@ -1,0 +1,29 @@
+---
+description: Suits Cashier backend stack, layout, and global conventions
+alwaysApply: true
+---
+
+# Suits Cashier Backend
+
+Node.js **ESM** (`"type": "module"`) Express API for a suits cashier app. MongoDB via Mongoose. Entrypoint: `index.js` → `src/app.router.js`.
+
+## Layout
+
+- `src/modules/<Feature>/` — routes, controller, validation per feature
+- `src/middleware/` — shared middleware (auth, generic validation)
+- `src/utils/` — `ErrorCatch`, uploads (`multer`), Redis helpers
+- `DB/<Entity>/` — Mongoose models (e.g. `Users.js`, `Orders.model.js`)
+- `uploads/` — static files served at `/uploads`
+
+## Stack
+
+- Express 4, Mongoose 8, Joi, JWT, argon2, multer, sharp, dotenv, cors
+- Optional Redis (`src/utils/redis.js`) — degrade gracefully if unavailable
+
+## Conventions
+
+- Prefer **named exports** for controllers/middleware; **default export** for routers
+- Use relative `.js` import paths (ESM)
+- Register new feature routers in `src/app.router.js`
+- Keep secrets in `.env` only — never hardcode JWT secrets or DB credentials
+- Match existing response shape: `{ success, message, ...data }`

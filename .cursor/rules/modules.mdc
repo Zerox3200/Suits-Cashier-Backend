@@ -1,0 +1,42 @@
+---
+description: Feature module structure — routes, controllers, validation
+globs: src/modules/**/*.js
+alwaysApply: false
+---
+
+# Module Conventions
+
+Each feature lives under `src/modules/<Name>/` with three files:
+
+| File | Role |
+|------|------|
+| `<name>.routes.js` | Express `Router`, wire validators → controllers |
+| `<name>.controller.js` | Business logic, wrapped in `ErrorCatch` |
+| `<name>.Validation.js` | Joi schemas as middleware |
+
+## Controller pattern
+
+```js
+import { ErrorCatch } from "../../utils/ErrorCatch.js";
+
+export const Action = ErrorCatch(async (req, res) => {
+  // ...
+  res.status(200).json({ message: "...", success: true });
+});
+```
+
+## Routes pattern
+
+```js
+import { Router } from "express";
+const router = Router();
+router.post("/path", SomeValidation, SomeController);
+export default router;
+```
+
+## Rules
+
+- Wrap every async handler with `ErrorCatch`
+- Put feature-specific Joi in the module’s `*.Validation.js`, not shared middleware
+- Mount the router in `src/app.router.js` (e.g. `app.use("/auth", authRoutes)`)
+- Use lowercase request body fields consistent with models (`name`, `email`, `password`, `phone`)
