@@ -18,6 +18,18 @@ const stockMovementSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    /** Absolute stock before this movement (manual adjustments / audits). */
+    previousQuantity: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
+    /** Absolute stock after this movement. */
+    newQuantity: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
     type: {
       type: String,
       enum: Object.values(STOCK_MOVEMENT_TYPE),

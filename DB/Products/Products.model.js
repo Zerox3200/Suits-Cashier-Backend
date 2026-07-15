@@ -7,12 +7,12 @@ const productSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      uppercase: true,
     },
     barcode: {
       type: String,
       trim: true,
-      sparse: true,
-      unique: true,
+      default: undefined,
     },
     name: {
       type: String,
@@ -68,7 +68,15 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-productSchema.index({ sku: 1 });
-productSchema.index({ barcode: 1 });
+// Unique only when barcode is a non-empty string (avoids E11000 on "")
+productSchema.index(
+  { barcode: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      barcode: { $exists: true, $type: "string", $gt: "" },
+    },
+  }
+);
 
 export const Product = mongoose.model("Product", productSchema);

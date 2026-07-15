@@ -5,6 +5,7 @@ import {
   createProduct,
   listProducts,
   getProductById,
+  scanProductByCode,
   updateProduct,
   deactivateProduct,
   restoreProduct,
@@ -30,6 +31,16 @@ export const GetProducts = ErrorCatch(async (req, res) => {
 export const GetProduct = ErrorCatch(async (req, res) => {
   const data = await getProductById(req.params.id);
   return sendSuccess(res, 200, MSG.PRODUCT_RETRIEVED, data);
+});
+
+/** Scan barcode / QR — body: { barcode | code, requireActive? } */
+export const ScanProduct = ErrorCatch(async (req, res) => {
+  const code = req.body.barcode || req.body.code || req.params.code;
+  const requireActive =
+    req.body.requireActive === true || req.query.requireActive === "true";
+
+  const data = await scanProductByCode(code, { requireActive });
+  return sendSuccess(res, 200, MSG.PRODUCT_SCANNED, data);
 });
 
 export const UpdateProduct = ErrorCatch(async (req, res) => {

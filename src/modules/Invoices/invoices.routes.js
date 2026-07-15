@@ -1,7 +1,6 @@
 import { Router } from "express";
 import {
   CheckToken,
-  CheckAdmin,
   CheckCashierOrAdmin,
 } from "../../middleware/Admin.middleware.js";
 import {
@@ -27,13 +26,18 @@ router.post(
 );
 
 router.get("/", CheckToken, CheckCashierOrAdmin, GetInvoices);
-router.get("/number/:invoiceNumber", CheckToken, CheckCashierOrAdmin, GetInvoiceByNumber);
+router.get(
+  "/number/:invoiceNumber",
+  CheckToken,
+  CheckCashierOrAdmin,
+  GetInvoiceByNumber
+);
 router.get("/:id", CheckToken, CheckCashierOrAdmin, GetInvoice);
 
 router.post(
   "/:id/return",
   CheckToken,
-  CheckAdmin,
+  CheckCashierOrAdmin,
   ReturnInvoiceValidation,
   ReturnInvoice
 );

@@ -47,14 +47,22 @@ export const STOCK_REFERENCE_TYPE = Object.freeze({
 export const ACTIVITY_ACTIONS = Object.freeze({
   CREATED_PRODUCT: "إنشاء منتج",
   UPDATED_PRODUCT: "تحديث منتج",
+  DEACTIVATED_PRODUCT: "تعطيل منتج",
+  RESTORED_PRODUCT: "استعادة منتج",
   CREATED_SUPPLIER: "إنشاء مورد",
   UPDATED_SUPPLIER: "تحديث مورد",
+  DELETED_SUPPLIER: "حذف مورد",
+  RESTORED_SUPPLIER: "استعادة مورد",
   CREATED_CATEGORY: "إنشاء تصنيف",
   UPDATED_CATEGORY: "تحديث تصنيف",
+  DELETED_CATEGORY: "حذف تصنيف",
+  RESTORED_CATEGORY: "استعادة تصنيف",
   ADJUSTED_STOCK: "تعديل مخزون",
   CREATED_INVOICE: "إنشاء فاتورة",
   RETURNED_INVOICE: "إرجاع فاتورة",
   CREATED_USER: "إنشاء مستخدم",
+  UPDATED_USER_PASSWORD: "تحديث كلمة مرور مستخدم",
+  UPDATED_USER_ROLE: "تحديث دور مستخدم",
   UPDATED_SETTINGS: "تحديث الإعدادات",
 });
 

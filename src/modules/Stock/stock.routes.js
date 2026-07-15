@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { CheckToken, CheckAdmin } from "../../middleware/Admin.middleware.js";
+import {
+  CheckToken,
+  CheckAdmin,
+  CheckCashierOrAdmin,
+} from "../../middleware/Admin.middleware.js";
 import { AdjustStockValidation } from "./stock.validation.js";
 import {
   GetStockList,
@@ -10,13 +14,13 @@ import {
 
 const router = Router();
 
-router.get("/", CheckToken, GetStockList);
-router.get("/low", CheckToken, CheckAdmin, GetLowStock);
-router.get("/:productId", CheckToken, GetStockByProduct);
+router.get("/", CheckToken, CheckCashierOrAdmin, GetStockList);
+router.get("/low", CheckToken, CheckCashierOrAdmin, GetLowStock);
+router.get("/:productId", CheckToken, CheckCashierOrAdmin, GetStockByProduct);
 router.patch(
   "/:productId",
   CheckToken,
-  CheckAdmin,
+  CheckCashierOrAdmin,
   AdjustStockValidation,
   AdjustStock
 );

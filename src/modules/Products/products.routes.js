@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { CheckToken, CheckAdmin } from "../../middleware/Admin.middleware.js";
+import {
+  CheckToken,
+  CheckAdmin,
+  CheckCashierOrAdmin,
+} from "../../middleware/Admin.middleware.js";
 import {
   PRODUCT_IMAGE_UPLOAD,
   imageUpload,
@@ -7,12 +11,14 @@ import {
 import {
   CreateProductValidation,
   UpdateProductValidation,
+  ScanProductValidation,
 } from "./products.validation.js";
 import { AdjustStockValidation } from "../Stock/stock.validation.js";
 import {
   CreateProduct,
   GetProducts,
   GetProduct,
+  ScanProduct,
   UpdateProduct,
   UpdateProductStock,
   DeactivateProduct,
@@ -24,19 +30,22 @@ const router = Router();
 router.post(
   "/",
   CheckToken,
-  CheckAdmin,
+  CheckCashierOrAdmin,
   ...imageUpload(PRODUCT_IMAGE_UPLOAD),
   CreateProductValidation,
   CreateProduct
 );
 
-router.get("/", CheckToken, GetProducts);
-router.get("/:id", CheckToken, GetProduct);
+router.post("/scan", CheckToken, CheckCashierOrAdmin, ScanProductValidation, ScanProduct);
+router.get("/scan/:code", CheckToken, CheckCashierOrAdmin, ScanProduct);
+
+router.get("/", CheckToken, CheckCashierOrAdmin, GetProducts);
+router.get("/:id", CheckToken, CheckCashierOrAdmin, GetProduct);
 
 router.put(
   "/:id",
   CheckToken,
-  CheckAdmin,
+  CheckCashierOrAdmin,
   ...imageUpload(PRODUCT_IMAGE_UPLOAD),
   UpdateProductValidation,
   UpdateProduct
@@ -45,10 +54,12 @@ router.put(
 router.patch(
   "/:id/stock",
   CheckToken,
-  CheckAdmin,
+  CheckCashierOrAdmin,
   AdjustStockValidation,
   UpdateProductStock
 );
+
+// Admin-only product lifecycle
 router.patch("/:id/deactivate", CheckToken, CheckAdmin, DeactivateProduct);
 router.patch("/:id/restore", CheckToken, CheckAdmin, RestoreProduct);
 

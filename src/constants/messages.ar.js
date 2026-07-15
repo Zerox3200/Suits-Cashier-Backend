@@ -14,8 +14,11 @@ export const MSG = {
   USER_EXISTS: "المستخدم موجود بالفعل",
   LOGIN_SUCCESS: "تم تسجيل الدخول بنجاح",
   USER_CREATED: "تم إنشاء المستخدم بنجاح",
+  USER_PASSWORD_UPDATED: "تم تحديث كلمة المرور بنجاح",
+  USER_ROLE_UPDATED: "تم تحديث دور المستخدم بنجاح",
   USER_AUTHENTICATED: "المستخدم مصادق عليه",
   USERS_RETRIEVED: "تم جلب المستخدمين بنجاح",
+  INVALID_ID: "المعرّف غير صالح",
 
   // Categories
   CATEGORY_CREATED: "تم إنشاء التصنيف بنجاح",
@@ -39,6 +42,7 @@ export const MSG = {
   SUPPLIER_NOT_FOUND: "المورد غير موجود",
   SUPPLIER_ALREADY_ACTIVE: "المورد مفعّل بالفعل",
   SUPPLIER_INACTIVE: "المورد غير موجود أو غير مفعّل",
+  SUPPLIER_EXISTS: "اسم المورد موجود بالفعل",
 
   // Products
   PRODUCT_CREATED: "تم إنشاء المنتج بنجاح",
@@ -50,6 +54,13 @@ export const MSG = {
   PRODUCT_ALREADY_ACTIVE: "المنتج مفعّل بالفعل",
   PRODUCT_NOT_FOUND: "المنتج غير موجود",
   PRODUCT_IMAGE_REQUIRED: "صورة المنتج مطلوبة",
+  INVALID_IMAGE_TYPE: "نوع الصورة غير مسموح",
+  IMAGE_TOO_LARGE: "حجم الصورة كبير جدًا",
+  SELLING_BELOW_COST: "سعر البيع لا يمكن أن يكون أقل من سعر التكلفة",
+  PRODUCT_SCANNED: "تم العثور على المنتج بنجاح",
+  PRODUCT_CODE_REQUIRED: "الباركود أو رمز QR مطلوب",
+  PRODUCT_INACTIVE: "المنتج غير مفعّل",
+  PRODUCT_OUT_OF_STOCK: "المنتج غير متوفر في المخزون",
   SKU_EXISTS: "رمز SKU موجود بالفعل",
   BARCODE_EXISTS: "الباركود موجود بالفعل",
 
@@ -103,5 +114,9 @@ export const MSG = {
   LOG_RETURNED_INVOICE: (number, reason) =>
     `تم إرجاع الفاتورة ${number}: ${reason || ""}`,
   LOG_CREATED_USER: (email, role) => `تم إنشاء المستخدم ${email} بدور ${role}`,
+  LOG_UPDATED_USER_ROLE: (email, role) =>
+    `تم تحديث دور المستخدم ${email} إلى ${role}`,
+  LOG_UPDATED_USER_PASSWORD: (email) =>
+    `تم تحديث كلمة مرور المستخدم ${email}`,
   LOG_UPDATED_SETTINGS: "تم تحديث إعدادات المتجر",
 };

@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import fs from 'fs';
 import sharp from 'sharp';
 import path from 'path';
+import { MSG } from '../constants/messages.ar.js';
 
 // ============================================================================
 // Constants & Configuration
@@ -176,7 +177,7 @@ const safeDeleteFile = (filePath) => {
       fs.unlinkSync(filePath);
     }
   } catch (error) {
-    console.warn(`Warning: Could not delete file: ${filePath}`, error.message);
+    console.warn(`تحذير: تعذر حذف الملف: ${filePath}`, error.message);
   }
 };
 
@@ -236,7 +237,7 @@ export const deleteUploadedFiles = async (...relativePaths) => {
 
     if (lastError) {
       console.warn(
-        `Warning: Could not delete file: ${fullPath}`,
+        `تحذير: تعذر حذف الملف: ${fullPath}`,
         lastError.message
       );
     }
@@ -417,7 +418,7 @@ const processFiles = async (files, processor) => {
  * @param {boolean} options.fileFilter.enabled - Enable/disable file filtering (default: true)
  * @returns {Object} - Multer middleware instance
  */
-export const upload = ({ folder, fileFilter: fileFilterOptions = {} }) => {
+export const upload = ({ folder, fileFilter: fileFilterOptions = {}, limits } = {}) => {
   if (!folder || typeof folder !== 'string') {
     throw new Error('Folder name is required');
   }
@@ -452,6 +453,7 @@ export const upload = ({ folder, fileFilter: fileFilterOptions = {} }) => {
   });
 
   const multerConfig = { storage };
+  if (limits) multerConfig.limits = limits;
 
   // Add file filter if enabled
   if (enabled) {
@@ -916,6 +918,9 @@ export const PRODUCT_IMAGE_UPLOAD = {
   maxCount: 1,
   generateLQIP: true,
   lqipAsFile: true,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MiB
+  },
   compressOptions: {
     quality: 85,
     maxWidth: 1600,
@@ -930,6 +935,23 @@ export const PRODUCT_IMAGE_UPLOAD = {
   },
 };
 
+const mapUploadError = (err) => {
+  if (!err) return null;
+  const mapped = new Error(
+    err.code === "LIMIT_FILE_SIZE" ? MSG.IMAGE_TOO_LARGE : MSG.INVALID_IMAGE_TYPE
+  );
+  mapped.cause = 400;
+  return mapped;
+};
+
+/** Wrap multer middleware so size/type failures return Arabic API messages. */
+const withMappedUploadErrors = (middleware) => (req, res, next) => {
+  middleware(req, res, (err) => {
+    if (!err) return next();
+    return next(mapUploadError(err));
+  });
+};
+
 export const imageUpload = (config = {}) => {
   const {
     folder,
@@ -939,14 +961,15 @@ export const imageUpload = (config = {}) => {
     lqipAsFile = false,
     compressOptions = {},
     lqipOptions = {},
-    fileFilter = {}
+    fileFilter = {},
+    limits,
   } = config;
 
   if (!folder) {
     throw new Error('Folder name is required for imageUpload middleware');
   }
 
-  const uploadMiddleware = upload({ folder, fileFilter });
+  const uploadMiddleware = upload({ folder, fileFilter, limits });
 
   let multerHandler;
   if (typeof fields === 'string') {
@@ -971,7 +994,11 @@ export const imageUpload = (config = {}) => {
     })
     : compressUploadedImages(compressOptions);
 
-  return [multerHandler, validateUploadedFileSignatures, processingMiddleware];
+  return [
+    withMappedUploadErrors(multerHandler),
+    validateUploadedFileSignatures,
+    processingMiddleware,
+  ];
 };
 
 export const shopLogoUploadMiddleware = imageUpload(SHOP_LOGO_UPLOAD);

@@ -1,4 +1,5 @@
 import JWT from "jsonwebtoken";
+import mongoose from "mongoose";
 import { User } from "../../DB/Users/Users.js";
 import { ErrorCatch } from "../utils/ErrorCatch.js";
 import { sendError } from "../utils/response.js";
@@ -13,7 +14,17 @@ export const CheckToken = ErrorCatch(async (req, res, next) => {
     return sendError(res, 401, MSG.NOT_AUTHORIZED);
   }
 
-  const decoded = JWT.verify(token, getJwtSecret());
+  let decoded;
+  try {
+    decoded = JWT.verify(token, getJwtSecret(), { algorithms: ["HS256"] });
+  } catch {
+    return sendError(res, 401, MSG.NOT_AUTHORIZED);
+  }
+
+  if (!decoded?.id || !mongoose.Types.ObjectId.isValid(decoded.id)) {
+    return sendError(res, 401, MSG.NOT_AUTHORIZED);
+  }
+
   const user = await User.findById(decoded.id);
 
   if (!user) {

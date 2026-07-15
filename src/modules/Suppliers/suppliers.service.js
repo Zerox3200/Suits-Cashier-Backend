@@ -5,6 +5,13 @@ import { ACTIVITY_ACTIONS, ACTIVITY_ENTITIES } from "../../constants/enums.js";
 import { MSG } from "../../constants/messages.ar.js";
 
 export const createSupplier = async (payload, userId) => {
+  const existing = await supplierRepository.findByName(payload.name);
+  if (existing) {
+    const error = new Error(MSG.SUPPLIER_EXISTS);
+    error.cause = 400;
+    throw error;
+  }
+
   const supplier = await supplierRepository.create({
     ...payload,
     createdBy: userId,
@@ -46,6 +53,15 @@ export const getSupplierById = async (id) => {
 };
 
 export const updateSupplier = async (id, payload, userId) => {
+  if (payload.name) {
+    const existing = await supplierRepository.findByName(payload.name);
+    if (existing && String(existing._id) !== String(id)) {
+      const error = new Error(MSG.SUPPLIER_EXISTS);
+      error.cause = 400;
+      throw error;
+    }
+  }
+
   const supplier = await supplierRepository.updateById(id, {
     ...payload,
     updatedBy: userId,
@@ -83,7 +99,7 @@ export const deleteSupplier = async (id, userId) => {
 
   await createActivityLog({
     user: userId,
-    action: ACTIVITY_ACTIONS.UPDATED_SUPPLIER,
+    action: ACTIVITY_ACTIONS.DELETED_SUPPLIER,
     entity: ACTIVITY_ENTITIES.SUPPLIER,
     entityId: supplier._id,
     description: MSG.LOG_DELETED_SUPPLIER(supplier.name),
@@ -113,7 +129,7 @@ export const restoreSupplier = async (id, userId) => {
 
   await createActivityLog({
     user: userId,
-    action: ACTIVITY_ACTIONS.UPDATED_SUPPLIER,
+    action: ACTIVITY_ACTIONS.RESTORED_SUPPLIER,
     entity: ACTIVITY_ENTITIES.SUPPLIER,
     entityId: supplier._id,
     description: MSG.LOG_RESTORED_SUPPLIER(supplier.name),

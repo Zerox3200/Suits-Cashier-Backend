@@ -1,7 +1,9 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose'
 
-export const conn = async () =>
-  await mongoose
-    .connect("mongodb://127.0.0.1:27017/Suits-app")
-    .then(() => console.log("Connected to MongoDB"))
-    .catch((err) => console.log("Connected faild", err));
+export const conn = async () => {
+  const uri =
+    process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/Suits-app'
+
+  await mongoose.connect(uri)
+  console.log('Connected to MongoDB')
+}

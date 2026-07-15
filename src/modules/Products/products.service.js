@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { productRepository } from "./products.repository.js";
 import { stockRepository } from "../Stock/stock.repository.js";
 import { categoryRepository } from "../Categories/categories.repository.js";
@@ -9,6 +10,17 @@ import { MSG } from "../../constants/messages.ar.js";
 import { runInTransaction } from "../../utils/transaction.js";
 import { deleteUploadedFiles } from "../../utils/multer.js";
 
+const escapeRegex = (value) =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const assertValidObjectId = (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    const error = new Error(MSG.INVALID_ID);
+    error.cause = 400;
+    throw error;
+  }
+};
+
 export const createProduct = async (payload, imageData, userId) => {
   const category = await categoryRepository.findById(payload.categoryId);
   if (!category || !category.isActive) {
@@ -18,8 +30,8 @@ export const createProduct = async (payload, imageData, userId) => {
   }
 
   const supplier = await supplierRepository.findById(payload.supplierId);
-  if (!supplier) {
-    const error = new Error(MSG.SUPPLIER_NOT_FOUND);
+  if (!supplier || !supplier.isActive) {
+    const error = new Error(MSG.SUPPLIER_INACTIVE);
     error.cause = 400;
     throw error;
   }
@@ -100,10 +112,11 @@ export const listProducts = async (query, user) => {
   }
 
   if (query.search) {
+    const safe = escapeRegex(query.search);
     filter.$or = [
-      { name: { $regex: query.search, $options: "i" } },
-      { sku: { $regex: query.search, $options: "i" } },
-      { barcode: { $regex: query.search, $options: "i" } },
+      { name: { $regex: safe, $options: "i" } },
+      { sku: { $regex: safe, $options: "i" } },
+      { barcode: { $regex: safe, $options: "i" } },
     ];
   }
 
@@ -115,6 +128,8 @@ export const listProducts = async (query, user) => {
 };
 
 export const getProductById = async (id) => {
+  assertValidObjectId(id);
+
   const product = await productRepository.findById(id);
   if (!product) {
     const error = new Error(MSG.PRODUCT_NOT_FOUND);
@@ -123,6 +138,35 @@ export const getProductById = async (id) => {
   }
 
   const stock = await stockRepository.findByProductId(id);
+  return { product, stock };
+};
+
+/**
+ * Scan barcode / QR code and resolve product + stock.
+ * Accepts barcode, SKU, or product ObjectId as the scanned value.
+ */
+export const scanProductByCode = async (code, { requireActive = false } = {}) => {
+  const trimmed = String(code || "").trim();
+  if (!trimmed) {
+    const error = new Error(MSG.PRODUCT_CODE_REQUIRED);
+    error.cause = 400;
+    throw error;
+  }
+
+  const product = await productRepository.findByScanCode(trimmed);
+  if (!product) {
+    const error = new Error(MSG.PRODUCT_NOT_FOUND);
+    error.cause = 404;
+    throw error;
+  }
+
+  if (requireActive && !product.isActive) {
+    const error = new Error(MSG.PRODUCT_INACTIVE);
+    error.cause = 400;
+    throw error;
+  }
+
+  const stock = await stockRepository.findByProductId(product._id);
   return { product, stock };
 };
 
@@ -145,8 +189,8 @@ export const updateProduct = async (id, payload, imageData, userId) => {
 
   if (payload.supplierId) {
     const supplier = await supplierRepository.findById(payload.supplierId);
-    if (!supplier) {
-      const error = new Error(MSG.SUPPLIER_NOT_FOUND);
+    if (!supplier || !supplier.isActive) {
+      const error = new Error(MSG.SUPPLIER_INACTIVE);
       error.cause = 400;
       throw error;
     }
@@ -161,19 +205,32 @@ export const updateProduct = async (id, payload, imageData, userId) => {
     }
   }
 
-  if (payload.barcode && payload.barcode !== existing.barcode) {
-    const existingBarcode = await productRepository.findByBarcode(payload.barcode);
-    if (existingBarcode) {
-      const error = new Error(MSG.BARCODE_EXISTS);
-      error.cause = 400;
-      throw error;
-    }
-  }
-
   const updateData = {
     ...payload,
     updatedBy: userId,
   };
+
+  if (payload.barcode !== undefined) {
+    const trimmed =
+      typeof payload.barcode === "string" ? payload.barcode.trim() : "";
+    if (trimmed) {
+      if (trimmed !== existing.barcode) {
+        const existingBarcode = await productRepository.findByBarcode(trimmed);
+        if (existingBarcode) {
+          const error = new Error(MSG.BARCODE_EXISTS);
+          error.cause = 400;
+          throw error;
+        }
+      }
+      updateData.barcode = trimmed;
+    } else {
+      // Force unset empty barcode (unique index forbids "")
+      updateData.barcode = "";
+    }
+  } else if (existing.barcode === "") {
+    // Fix legacy empty barcodes on any update (e.g. isActive)
+    updateData.barcode = "";
+  }
 
   const oldImage = existing.image;
   const oldImageLqip = existing.imageLqip;
@@ -229,7 +286,7 @@ export const deactivateProduct = async (id, userId) => {
 
   await createActivityLog({
     user: userId,
-    action: ACTIVITY_ACTIONS.UPDATED_PRODUCT,
+    action: ACTIVITY_ACTIONS.DEACTIVATED_PRODUCT,
     entity: ACTIVITY_ENTITIES.PRODUCT,
     entityId: product._id,
     description: MSG.LOG_DEACTIVATED_PRODUCT(product.name, product.sku),
@@ -259,7 +316,7 @@ export const restoreProduct = async (id, userId) => {
 
   await createActivityLog({
     user: userId,
-    action: ACTIVITY_ACTIONS.UPDATED_PRODUCT,
+    action: ACTIVITY_ACTIONS.RESTORED_PRODUCT,
     entity: ACTIVITY_ENTITIES.PRODUCT,
     entityId: product._id,
     description: MSG.LOG_RESTORED_PRODUCT(product.name, product.sku),

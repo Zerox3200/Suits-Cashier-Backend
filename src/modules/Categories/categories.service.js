@@ -103,7 +103,7 @@ export const deleteCategory = async (id, userId) => {
 
   await createActivityLog({
     user: userId,
-    action: ACTIVITY_ACTIONS.UPDATED_CATEGORY,
+    action: ACTIVITY_ACTIONS.DELETED_CATEGORY,
     entity: ACTIVITY_ENTITIES.CATEGORY,
     entityId: category._id,
     description: MSG.LOG_DELETED_CATEGORY(category.name),
@@ -135,7 +135,7 @@ export const restoreCategory = async (id, userId) => {
 
   await createActivityLog({
     user: userId,
-    action: ACTIVITY_ACTIONS.UPDATED_CATEGORY,
+    action: ACTIVITY_ACTIONS.RESTORED_CATEGORY,
     entity: ACTIVITY_ENTITIES.CATEGORY,
     entityId: category._id,
     description: MSG.LOG_RESTORED_CATEGORY(category.name),

@@ -6,7 +6,8 @@ import { GetSettings, UpdateSettings } from "./settings.controller.js";
 
 const router = Router();
 
-router.get("/", CheckToken, CheckAdmin, GetSettings);
+// Any authenticated user can read settings (needed for receipt printing).
+router.get("/", CheckToken, GetSettings);
 router.put(
   "/",
   CheckToken,

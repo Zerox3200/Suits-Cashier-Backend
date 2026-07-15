@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { Product } from "../../../DB/Products/Products.model.js";
 
 const populateFields = [
@@ -21,9 +22,34 @@ export const productRepository = {
     return q;
   },
 
-  findBySku: (sku) => Product.findOne({ sku }),
+  findBySku: (sku) => {
+    const normalized = String(sku || "").trim().toUpperCase();
+    return Product.findOne({ sku: normalized });
+  },
 
   findByBarcode: (barcode) => Product.findOne({ barcode }),
+
+  /** Lookup by barcode, SKU, or product id (QR/barcode scanner payload). */
+  findByScanCode: async (code) => {
+    const trimmed = String(code || "").trim();
+    if (!trimmed) return null;
+
+    const byBarcode = await Product.findOne({ barcode: trimmed }).populate(
+      populateFields
+    );
+    if (byBarcode) return byBarcode;
+
+    const bySku = await Product.findOne({
+      sku: trimmed.toUpperCase(),
+    }).populate(populateFields);
+    if (bySku) return bySku;
+
+    if (mongoose.Types.ObjectId.isValid(trimmed)) {
+      return Product.findById(trimmed).populate(populateFields);
+    }
+
+    return null;
+  },
 
   findManyByIds: (ids, session = null) => {
     const q = Product.find({ _id: { $in: ids }, isActive: true });
@@ -43,10 +69,29 @@ export const productRepository = {
     return { items, total };
   },
 
-  updateById: (id, data) =>
-    Product.findByIdAndUpdate(id, data, { new: true, runValidators: true }).populate(
-      populateFields
-    ),
+  updateById: (id, data) => {
+    const update = { ...data };
+
+    // Empty barcode must be unset — unique index treats "" as a duplicate key
+    if (
+      Object.prototype.hasOwnProperty.call(update, "barcode") &&
+      (update.barcode === "" ||
+        update.barcode === null ||
+        (typeof update.barcode === "string" && !update.barcode.trim()))
+    ) {
+      delete update.barcode;
+      return Product.findByIdAndUpdate(
+        id,
+        { $set: update, $unset: { barcode: 1 } },
+        { new: true, runValidators: true }
+      ).populate(populateFields);
+    }
+
+    return Product.findByIdAndUpdate(id, update, {
+      new: true,
+      runValidators: true,
+    }).populate(populateFields);
+  },
 
   softDeleteByCategoryId: (categoryId, updatedBy = null) =>
     Product.updateMany(

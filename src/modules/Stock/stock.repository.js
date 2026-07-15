@@ -26,6 +26,36 @@ export const stockRepository = {
     return Stock.findOneAndUpdate({ productId }, data, opts);
   },
 
+  /**
+   * Atomically decrease stock only if enough quantity remains.
+   * Returns null when stock is missing or insufficient (safe for concurrent sales).
+   */
+  decrementIfAvailable: (productId, quantity, session = null) => {
+    const opts = { new: true, runValidators: true };
+    if (session) opts.session = session;
+    return Stock.findOneAndUpdate(
+      { productId, quantity: { $gte: quantity } },
+      {
+        $inc: { quantity: -quantity },
+        $set: { lastUpdated: new Date() },
+      },
+      opts
+    );
+  },
+
+  incrementQuantity: (productId, quantity, session = null) => {
+    const opts = { new: true, runValidators: true };
+    if (session) opts.session = session;
+    return Stock.findOneAndUpdate(
+      { productId },
+      {
+        $inc: { quantity },
+        $set: { lastUpdated: new Date() },
+      },
+      opts
+    );
+  },
+
   findPaginated: async ({ skip, limit, filter = {} }) => {
     const [items, total] = await Promise.all([
       Stock.find(filter)
@@ -45,7 +75,9 @@ export const stockRepository = {
   },
 
   findLowStock: async () => {
+    // Quantity above zero but at/below reorder threshold (zero → outOfStock only)
     return Stock.find({
+      quantity: { $gt: 0 },
       $expr: { $lte: ["$quantity", "$minimumQuantity"] },
     }).populate("productId");
   },

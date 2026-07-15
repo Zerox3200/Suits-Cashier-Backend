@@ -20,16 +20,16 @@ export const GetInvoices = ErrorCatch(async (req, res) => {
 });
 
 export const GetInvoice = ErrorCatch(async (req, res) => {
-  const invoice = await getInvoiceById(req.params.id);
+  const invoice = await getInvoiceById(req.params.id, req.user);
   return sendSuccess(res, 200, MSG.INVOICE_RETRIEVED, { invoice });
 });
 
 export const GetInvoiceByNumber = ErrorCatch(async (req, res) => {
-  const invoice = await getInvoiceByNumber(req.params.invoiceNumber);
+  const invoice = await getInvoiceByNumber(req.params.invoiceNumber, req.user);
   return sendSuccess(res, 200, MSG.INVOICE_RETRIEVED, { invoice });
 });
 
 export const ReturnInvoice = ErrorCatch(async (req, res) => {
-  const invoice = await returnInvoice(req.params.id, req.body, req.user._id);
+  const invoice = await returnInvoice(req.params.id, req.body, req.user);
   return sendSuccess(res, 200, MSG.INVOICE_RETURNED, { invoice });
 });

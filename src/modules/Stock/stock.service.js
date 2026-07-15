@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { stockRepository } from "./stock.repository.js";
 import { stockMovementRepository } from "../StockMovements/stockMovements.repository.js";
 import { productRepository } from "../Products/products.repository.js";
@@ -46,6 +47,12 @@ export const listStock = async (query) => {
 };
 
 export const getStockByProductId = async (productId) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    const error = new Error(MSG.INVALID_ID);
+    error.cause = 400;
+    throw error;
+  }
+
   const stock = await stockRepository.findByProductId(productId);
   if (!stock) {
     const error = new Error(MSG.STOCK_NOT_FOUND);
@@ -62,6 +69,12 @@ export const getStockByProductId = async (productId) => {
 };
 
 export const adjustStock = async (productId, { quantity, reason }, userId) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    const error = new Error(MSG.INVALID_ID);
+    error.cause = 400;
+    throw error;
+  }
+
   const product = await productRepository.findByIdLean(productId);
   if (!product) {
     const error = new Error(MSG.PRODUCT_NOT_FOUND);
@@ -77,23 +90,22 @@ export const adjustStock = async (productId, { quantity, reason }, userId) => {
   }
 
   const newQuantity = Number(quantity);
-  if (Number.isNaN(newQuantity) || newQuantity < 0) {
+  if (!Number.isInteger(newQuantity) || newQuantity < 0) {
     const error = new Error(MSG.QUANTITY_NON_NEGATIVE);
     error.cause = 400;
     throw error;
   }
 
-  const delta = Math.abs(newQuantity - stock.quantity);
+  const previousQuantity = stock.quantity;
+  const delta = Math.abs(newQuantity - previousQuantity);
   if (delta === 0) {
     const error = new Error(MSG.QUANTITY_UNCHANGED);
     error.cause = 400;
     throw error;
   }
 
-  const type = resolveMovementType(reason, stock.quantity, newQuantity);
+  const type = resolveMovementType(reason, previousQuantity, newQuantity);
 
-  // Damaged/Lost/Purchase semantics: quantity is the absolute new stock level for Correction/Manual;
-  // For Damaged/Lost we treat body.quantity as the absolute target as well (set stock to this value).
   const movementReason =
     reason === STOCK_ADJUST_REASON.RETURN
       ? STOCK_MOVEMENT_REASON.RETURN
@@ -110,6 +122,8 @@ export const adjustStock = async (productId, { quantity, reason }, userId) => {
       {
         productId,
         quantity: delta,
+        previousQuantity,
+        newQuantity,
         type,
         reason: movementReason,
         referenceId: null,

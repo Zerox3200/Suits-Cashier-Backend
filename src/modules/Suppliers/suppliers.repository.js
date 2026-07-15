@@ -5,6 +5,8 @@ export const supplierRepository = {
 
   findById: (id) => Supplier.findById(id),
 
+  findByName: (name) => Supplier.findOne({ name }),
+
   findPaginated: async ({ skip, limit, filter = {} }) => {
     const [items, total] = await Promise.all([
       Supplier.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),

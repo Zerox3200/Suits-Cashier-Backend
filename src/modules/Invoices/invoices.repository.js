@@ -1,4 +1,5 @@
 import { Invoice } from "../../../DB/Invoices/Invoices.model.js";
+import { INVOICE_STATUS } from "../../constants/enums.js";
 
 export const invoiceRepository = {
   create: (data, session = null) => {
@@ -41,7 +42,7 @@ export const invoiceRepository = {
   aggregate: (pipeline) => Invoice.aggregate(pipeline),
 
   findRecent: (limit = 10) =>
-    Invoice.find()
+    Invoice.find({ status: INVOICE_STATUS.COMPLETED })
       .populate("createdBy", "name email")
       .sort({ createdAt: -1 })
       .limit(limit),
