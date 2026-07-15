@@ -1,0 +1,151 @@
+# Deploy to production over SSH (PM2, no Docker).
+#
+# GitHub secrets (only these five):
+#   SERVER_HOST       — server IP or hostname
+#   SERVER_USER       — SSH login username
+#   SERVER_PASSWORD   — SSH password
+#   SERVER_BASE_PATH  — folder you land in after SSH login (for nvm/profile)
+#   SERVER_APP_PATH   — absolute path to Suits-Cashier-Backend repo on the server
+
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to server
+    runs-on: ubuntu-latest
+    # Skip auto-deploy when the push commit message contains [skip deploy].
+    # Manual workflow_dispatch always runs.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.ref == 'refs/heads/main' &&
+       !contains(github.event.head_commit.message, '[skip deploy]'))
+    concurrency:
+      group: suits-cashier-backend-production-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          timeout: 30s
+          command_timeout: 15m
+          script: |
+            set -e
+
+            BASE_PATH="${{ secrets.SERVER_BASE_PATH }}"
+            APP_PATH="${{ secrets.SERVER_APP_PATH }}"
+
+            if [ -z "$BASE_PATH" ]; then
+              echo "Error: SERVER_BASE_PATH secret is not set"
+              exit 1
+            fi
+            if [ -z "$APP_PATH" ]; then
+              echo "Error: SERVER_APP_PATH secret is not set"
+              exit 1
+            fi
+            if [ ! -d "$APP_PATH" ]; then
+              echo "Error: SERVER_APP_PATH does not exist: $APP_PATH"
+              exit 1
+            fi
+
+            echo "Base path: $BASE_PATH"
+            echo "App path:  $APP_PATH"
+
+            export PATH="/usr/local/bin:/usr/bin:/bin:$BASE_PATH/.local/bin:$PATH"
+            if [ -f "$BASE_PATH/.profile" ]; then . "$BASE_PATH/.profile" 2>/dev/null || true; fi
+            if [ -f "$BASE_PATH/.bashrc" ]; then . "$BASE_PATH/.bashrc" 2>/dev/null || true; fi
+            if [ -f "$BASE_PATH/.nvm/nvm.sh" ]; then
+              . "$BASE_PATH/.nvm/nvm.sh"
+              nvm use default 2>/dev/null || nvm use node 2>/dev/null || true
+            fi
+
+            if ! command -v npm >/dev/null 2>&1; then
+              echo "npm not found. Install Node.js or nvm under $BASE_PATH"
+              exit 1
+            fi
+            if ! command -v pm2 >/dev/null 2>&1; then
+              echo "pm2 not found. Run: npm install -g pm2"
+              exit 1
+            fi
+            echo "Using node $(node -v), npm $(npm -v), pm2 $(pm2 -v)"
+
+            cd "$APP_PATH"
+
+            if [ ! -d .git ]; then
+              echo "Error: $APP_PATH is not a git repository"
+              exit 1
+            fi
+
+            echo "Pulling latest code..."
+            git fetch origin main
+            git checkout main
+            git pull origin main || git reset --hard origin/main
+
+            echo "Installing dependencies..."
+            npm ci --omit=dev
+
+            # Export PORT from .env so PM2 health check matches the listening port.
+            # (Node still loads the full .env via dotenv on startup.)
+            PORT="5200"
+            if [ -f .env ]; then
+              ENV_PORT="$(grep -E '^[[:space:]]*PORT[[:space:]]*=' .env | tail -n 1 | sed -E 's/^[[:space:]]*PORT[[:space:]]*=[[:space:]]*//; s/[[:space:]]*$//; s/\r$//')"
+              if [ -n "$ENV_PORT" ]; then
+                export PORT="$ENV_PORT"
+                echo "Using PORT=$PORT from .env"
+              fi
+            fi
+
+            echo "Restarting PM2..."
+            APP_NAME="Suits-C"
+
+            # Remove stale/duplicate PM2 entries (prevents EADDRINUSE from ghost processes).
+            for STALE_NAME in Suits-C Suits-Cashier-Backend suits-cashier; do
+              pm2 stop "$STALE_NAME" >/dev/null 2>&1 || true
+              pm2 delete "$STALE_NAME" >/dev/null 2>&1 || true
+            done
+
+            pm2 start index.js --name "$APP_NAME" --update-env || {
+              echo "pm2 start failed, showing pm2 list"
+              pm2 list || true
+              exit 1
+            }
+            pm2 save
+
+            echo "Health check..."
+            if [ -f .env ]; then
+              ENV_PORT="$(grep -E '^[[:space:]]*PORT[[:space:]]*=' .env | tail -n 1 | sed -E 's/^[[:space:]]*PORT[[:space:]]*=[[:space:]]*//; s/[[:space:]]*$//; s/\r$//')"
+              if [ -n "$ENV_PORT" ]; then
+                PORT="$ENV_PORT"
+              fi
+            fi
+            echo "Checking http://127.0.0.1:$PORT/ (waiting up to 60s)"
+            MAX_WAIT=60
+            INTERVAL=3
+            elapsed=0
+            while ! curl -fsS -o /dev/null -w "%{http_code}" "http://127.0.0.1:$PORT/" | grep -qE '^[2345]'; do
+              elapsed=$((elapsed + INTERVAL))
+              if [ "$elapsed" -ge "$MAX_WAIT" ]; then
+                echo "Health check failed on port $PORT after ${MAX_WAIT}s"
+                pm2 logs "$APP_NAME" --lines 80 --nostream || true
+                pm2 list || true
+                exit 1
+              fi
+              echo "Waiting for service on port $PORT... (${elapsed}s elapsed)"
+              sleep "$INTERVAL"
+            done
+
+            echo "Health check succeeded on port $PORT"
+            echo "Deployment complete!"

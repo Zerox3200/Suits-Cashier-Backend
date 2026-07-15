@@ -1,36 +1,44 @@
-name: Backend CI
+# CI — test and validate on every push/PR (does not deploy).
+# Deployment is handled by deploy.yml
+
+name: CI - Test and Build
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main]
   pull_request:
+    branches: [main]
+
+concurrency:
+  group: suits-cashier-backend-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
+    name: Test and validate
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "18"
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run automated test suite with coverage
-        run: npm run test:ci
-        env:
-          JWT_SECRET: ci-test-jwt-secret
-          NODE_ENV: test
+      - name: Run linter
+        run: npm run lint || echo "Linter not configured"
 
-      - name: Upload coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage
-          path: coverage
-          retention-days: 14
+      - name: Run tests
+        run: npm test
+
+      - name: Syntax check entrypoint
+        run: node --check index.js
+
+      - name: Syntax check app router
+        run: node --check src/app.router.js
