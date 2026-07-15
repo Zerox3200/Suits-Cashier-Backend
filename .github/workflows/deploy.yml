@@ -1,11 +1,12 @@
 # Deploy to production over SSH (PM2, no Docker).
 #
-# GitHub secrets (only these five):
+# GitHub secrets:
 #   SERVER_HOST       — server IP or hostname
 #   SERVER_USER       — SSH login username
 #   SERVER_PASSWORD   — SSH password
-#   SERVER_BASE_PATH  — folder you land in after SSH login (for nvm/profile)
-#   SERVER_APP_PATH   — absolute path to Suits-Cashier-Backend repo on the server
+#   SERVER_BASE_PATH  — SSH user home (for nvm/profile), e.g. /home/ubuntu
+#   SERVER_APP_PATH   — absolute path where the app should live on the server
+#                        (created + cloned automatically if missing)
 
 name: Deploy to Production
 
@@ -45,8 +46,9 @@ jobs:
           script: |
             set -e
 
-            BASE_PATH="${{ secrets.SERVER_BASE_PATH }}"
-            APP_PATH="${{ secrets.SERVER_APP_PATH }}"
+            BASE_PATH="$(printf '%s' '${{ secrets.SERVER_BASE_PATH }}' | tr -d '\r' | sed 's/[[:space:]]*$//')"
+            APP_PATH="$(printf '%s' '${{ secrets.SERVER_APP_PATH }}' | tr -d '\r' | sed 's/[[:space:]]*$//')"
+            REPO_URL="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
 
             if [ -z "$BASE_PATH" ]; then
               echo "Error: SERVER_BASE_PATH secret is not set"
@@ -54,10 +56,6 @@ jobs:
             fi
             if [ -z "$APP_PATH" ]; then
               echo "Error: SERVER_APP_PATH secret is not set"
-              exit 1
-            fi
-            if [ ! -d "$APP_PATH" ]; then
-              echo "Error: SERVER_APP_PATH does not exist: $APP_PATH"
               exit 1
             fi
 
@@ -72,6 +70,10 @@ jobs:
               nvm use default 2>/dev/null || nvm use node 2>/dev/null || true
             fi
 
+            if ! command -v git >/dev/null 2>&1; then
+              echo "git not found on server"
+              exit 1
+            fi
             if ! command -v npm >/dev/null 2>&1; then
               echo "npm not found. Install Node.js or nvm under $BASE_PATH"
               exit 1
@@ -82,17 +84,27 @@ jobs:
             fi
             echo "Using node $(node -v), npm $(npm -v), pm2 $(pm2 -v)"
 
-            cd "$APP_PATH"
-
-            if [ ! -d .git ]; then
-              echo "Error: $APP_PATH is not a git repository"
-              exit 1
+            # First deploy: create folder and clone if path is missing or empty.
+            if [ ! -d "$APP_PATH/.git" ]; then
+              echo "App path missing or not a git repo — cloning..."
+              PARENT="$(dirname "$APP_PATH")"
+              mkdir -p "$PARENT"
+              if [ -d "$APP_PATH" ] && [ -n "$(ls -A "$APP_PATH" 2>/dev/null)" ]; then
+                echo "Error: $APP_PATH exists but is not a git repo (and not empty)"
+                ls -la "$APP_PATH" || true
+                exit 1
+              fi
+              rm -rf "$APP_PATH"
+              git clone --branch master "$REPO_URL" "$APP_PATH"
             fi
 
+            cd "$APP_PATH"
+
             echo "Pulling latest code..."
+            git remote set-url origin "$REPO_URL"
             git fetch origin master
             git checkout master
-            git pull origin master || git reset --hard origin/master
+            git reset --hard origin/master
 
             echo "Installing dependencies..."
             npm ci --omit=dev
