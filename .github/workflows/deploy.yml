@@ -90,9 +90,9 @@ jobs:
             fi
 
             echo "Pulling latest code..."
-            git fetch origin main
-            git checkout main
-            git pull origin main || git reset --hard origin/main
+            git fetch origin master
+            git checkout master
+            git pull origin master || git reset --hard origin/master
 
             echo "Installing dependencies..."
             npm ci --omit=dev
