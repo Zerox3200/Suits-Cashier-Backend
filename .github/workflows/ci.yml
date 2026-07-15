@@ -5,9 +5,9 @@ name: CI - Test and Build
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 concurrency:
   group: suits-cashier-backend-ci-${{ github.ref }}
