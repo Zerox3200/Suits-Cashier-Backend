@@ -47,6 +47,7 @@ export const Login = ErrorCatch(async (req, res) => {
   return sendSuccess(res, 200, MSG.LOGIN_SUCCESS, {
     user: sanitizeUser(user),
     token,
+    test: "test",
   });
 });
 
