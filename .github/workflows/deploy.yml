@@ -111,7 +111,7 @@ jobs:
 
             # Export PORT from .env so PM2 health check matches the listening port.
             # (Node still loads the full .env via dotenv on startup.)
-            PORT="5200"
+            PORT="4998"
             if [ -f .env ]; then
               ENV_PORT="$(grep -E '^[[:space:]]*PORT[[:space:]]*=' .env | tail -n 1 | sed -E 's/^[[:space:]]*PORT[[:space:]]*=[[:space:]]*//; s/[[:space:]]*$//; s/\r$//')"
               if [ -n "$ENV_PORT" ]; then
