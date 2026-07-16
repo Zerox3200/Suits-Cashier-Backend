@@ -93,6 +93,7 @@ export const MSG = {
   SETTINGS_RETRIEVED: "تم جلب الإعدادات بنجاح",
   SETTINGS_UPDATED: "تم تحديث الإعدادات بنجاح",
   DASHBOARD_RETRIEVED: "تم جلب إحصائيات لوحة التحكم بنجاح",
+  PROFITS_RETRIEVED: "تم جلب تقرير الأرباح اليومية بنجاح",
   ACTIVITY_LOGS_RETRIEVED: "تم جلب سجل الأنشطة بنجاح",
 
   // Activity descriptions

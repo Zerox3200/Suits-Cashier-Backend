@@ -7,6 +7,7 @@ import stockMovementsRoutes from "./modules/StockMovements/stockMovements.routes
 import invoicesRoutes from "./modules/Invoices/invoices.routes.js";
 import settingsRoutes from "./modules/Settings/settings.routes.js";
 import dashboardRoutes from "./modules/Dashboard/dashboard.routes.js";
+import profitsRoutes from "./modules/Profits/profits.routes.js";
 import activityLogRoutes from "./modules/ActivityLog/activityLog.routes.js";
 
 export const appRouter = (app, express) => {
@@ -24,6 +25,7 @@ export const appRouter = (app, express) => {
   app.use("/invoices", invoicesRoutes);
   app.use("/settings", settingsRoutes);
   app.use("/dashboard", dashboardRoutes);
+  app.use("/profits", profitsRoutes);
   app.use("/activity-logs", activityLogRoutes);
 
   app.all("*", (req, res, next) => {
