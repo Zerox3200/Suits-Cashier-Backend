@@ -19,11 +19,11 @@ import {
 
 const router = Router();
 
-// Cashiers need categories for product forms (list + create)
+// Cashiers can list; create is admin-only
 router.post(
   "/",
   CheckToken,
-  CheckCashierOrAdmin,
+  CheckAdmin,
   CreateCategoryValidation,
   CreateCategory
 );
