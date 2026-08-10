@@ -6,6 +6,7 @@
   "description": "Suits Cashier POS API",
   "scripts": {
     "start": "node index.js",
+    "cleanup:products-invoices": "node scripts/deleteProductsAndInvoices.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
