@@ -5,6 +5,8 @@ import { conn } from './DB/connection.js'
 import { seedAdmin } from './DB/Users/seedSuperAdmin.js'
 import { migrateEnumsToArabic } from './DB/migrateEnumsToArabic.js'
 import { migrateProductBarcodes } from './DB/migrateProductBarcodes.js'
+import { runCleanupProductsAndInvoicesIfEnabled } from './DB/cleanupProductsAndInvoices.js'
+import { runCleanupMerchantsIfEnabled } from './DB/cleanupMerchants.js'
 
 dotenv.config()
 
@@ -14,6 +16,8 @@ const start = async () => {
   await conn()
   await migrateEnumsToArabic()
   await migrateProductBarcodes()
+  await runCleanupProductsAndInvoicesIfEnabled()
+  await runCleanupMerchantsIfEnabled()
   await seedAdmin()
 
   const app = createApp()
