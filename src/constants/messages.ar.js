@@ -85,7 +85,7 @@ export const MSG = {
   INVOICE_NOT_FOUND: "الفاتورة غير موجودة",
   INVOICE_ALREADY_RETURNED: "تم إرجاع الفاتورة بالفعل",
   INVOICE_NEEDS_ITEMS: "يجب أن تحتوي الفاتورة على عنصر واحد على الأقل",
-  DISCOUNT_EXCEEDS: "لا يمكن أن يتجاوز الخصم المجموع الفرعي",
+  DISCOUNT_EXCEEDS: "يجب أن يكون الخصم بين 0 و 100 بالمئة",
   INVOICE_NUMBER_FAILED: "فشل إنشاء رقم فاتورة فريد",
   PRODUCT_NOT_FOUND_ID: (id) => `المنتج غير موجود: ${id}`,
 

@@ -31,6 +31,8 @@ const createUniqueInvoiceNumber = async (session) => {
   throw error;
 };
 
+const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
 const isWriteConflict = (err) =>
   err?.code === 112 ||
   err?.codeName === "WriteConflict" ||
@@ -97,13 +99,14 @@ export const createInvoice = async (payload, userId) => {
         });
       }
 
-      const discount = Number(payload.discount) || 0;
+      const discountPercent = Number(payload.discount) || 0;
       const tax = Number(payload.tax) || 0;
-      if (discount > subTotal) {
+      if (discountPercent < 0 || discountPercent > 100) {
         const error = new Error(MSG.DISCOUNT_EXCEEDS);
         error.cause = 400;
         throw error;
       }
+      const discount = round2((subTotal * discountPercent) / 100);
 
       // Atomically reserve stock before creating the invoice (race-safe).
       for (const item of snapshotItems) {
@@ -125,7 +128,7 @@ export const createInvoice = async (payload, userId) => {
         }
       }
 
-      const total = subTotal - discount + tax;
+      const total = round2(subTotal - discount + tax);
       const invoiceNumber = await createUniqueInvoiceNumber(session);
 
       const invoice = await invoiceRepository.create(
@@ -135,6 +138,7 @@ export const createInvoice = async (payload, userId) => {
           customerPhone: payload.customerPhone || "",
           items: snapshotItems,
           subTotal,
+          discountPercent,
           discount,
           tax,
           total,

@@ -31,8 +31,9 @@ export const CreateInvoiceValidation = ErrorCatch(async (req, res, next) => {
         "array.min": "يجب إضافة منتج واحد على الأقل",
         "any.required": "عناصر الفاتورة مطلوبة",
       }),
-    discount: joi.number().min(0).optional().messages({
+    discount: joi.number().min(0).max(100).optional().messages({
       "number.min": "الخصم لا يمكن أن يكون سالبًا",
+      "number.max": "يجب أن يكون الخصم بين 0 و 100 بالمئة",
     }),
     tax: joi.number().min(0).optional().messages({
       "number.min": "الضريبة لا يمكن أن تكون سالبة",
