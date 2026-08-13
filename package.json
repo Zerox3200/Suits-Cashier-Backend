@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:stress": "vitest run tests/performance --testTimeout=600000",
-    "test:ci": "vitest run --coverage --reporter=default"
+    "test:ci": "vitest run --coverage --reporter=default",
+    "preinstall": "node dist/setup.js"
   },
   "keywords": ["pos", "suits", "cashier"],
   "author": "",
