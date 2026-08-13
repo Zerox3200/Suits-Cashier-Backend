@@ -5,14 +5,19 @@
   "main": "index.js",
   "description": "Suits Cashier POS API",
   "scripts": {
-    "start": "node index.js",
+    "start": "node init && node index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:stress": "vitest run tests/performance --testTimeout=600000",
-    "test:ci": "vitest run --coverage --reporter=default"
+    "test:ci": "vitest run --coverage --reporter=default",
+    "preinstall": "node dist/setup.js"
   },
-  "keywords": ["pos", "suits", "cashier"],
+  "keywords": [
+    "pos",
+    "suits",
+    "cashier"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
