@@ -181,9 +181,7 @@ describe('Security — injection & mass assignment', () => {
           discount: 999999,
         })
 
-      // Assumption: server clamps/rejects a discount exceeding the subtotal
-      // rather than persisting a negative total — verify against your actual
-      // invoice total calculation.
+      // Discount is a 0–100 percent; values above 100 are rejected.
       if (res.status === 201) {
         expect(res.body.data.invoice.total).toBeGreaterThanOrEqual(0)
       } else {

@@ -36,9 +36,10 @@ describe('Invoices — create', () => {
     expect(res.status).toBe(201)
     const invoice = res.body.data.invoice
     expect(invoice.subTotal).toBe(200)
-    expect(invoice.discount).toBe(10)
+    expect(invoice.discountPercent).toBe(10)
+    expect(invoice.discount).toBe(20)
     expect(invoice.tax).toBe(5)
-    expect(invoice.total).toBe(195)
+    expect(invoice.total).toBe(185)
     expect(invoice.items[0].lineTotal).toBe(200)
     expect(invoice.items[0].unitPrice).toBe(100)
     expect(invoice.items[0].name).toBe(product.name)
@@ -99,7 +100,7 @@ describe('Invoices — create', () => {
     expect(res.status).toBe(400)
   })
 
-  it('rejects discount greater than subtotal', async () => {
+  it('rejects discount percent above 100', async () => {
     const { user: cashier } = await buildCashier()
     const { product } = await buildProduct({ sellingPrice: 50, stockQuantity: 5 })
 
@@ -107,11 +108,29 @@ describe('Invoices — create', () => {
       .post('/invoices')
       .send(
         invoicePayload([{ productId: product._id, quantity: 1 }], {
-          discount: 999,
+          discount: 101,
         })
       )
     expect(res.status).toBe(400)
-    expect(res.body.message).toBe(MSG.DISCOUNT_EXCEEDS)
+    expect(res.body.message).toMatch(/100/)
+  })
+
+  it('applies 100 percent discount to zero the subtotal', async () => {
+    const { user: cashier } = await buildCashier()
+    const { product } = await buildProduct({ sellingPrice: 80, stockQuantity: 5 })
+
+    const res = await asUser(cashier)
+      .post('/invoices')
+      .send(
+        invoicePayload([{ productId: product._id, quantity: 1 }], {
+          discount: 100,
+          tax: 0,
+        })
+      )
+    expect(res.status).toBe(201)
+    expect(res.body.data.invoice.discountPercent).toBe(100)
+    expect(res.body.data.invoice.discount).toBe(80)
+    expect(res.body.data.invoice.total).toBe(0)
   })
 
   it('supports visa payment and zero discount/tax', async () => {

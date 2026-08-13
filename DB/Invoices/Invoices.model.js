@@ -35,6 +35,7 @@ const invoiceSchema = new mongoose.Schema(
       validate: [(v) => v.length > 0, "يجب أن تحتوي الفاتورة على عنصر واحد على الأقل"],
     },
     subTotal: { type: Number, required: true, min: 0 },
+    discountPercent: { type: Number, default: 0, min: 0, max: 100 },
     discount: { type: Number, default: 0, min: 0 },
     tax: { type: Number, default: 0, min: 0 },
     total: { type: Number, required: true, min: 0 },
